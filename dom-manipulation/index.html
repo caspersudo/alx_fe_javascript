@@ -22,10 +22,10 @@
       font-style: italic;
       color: #555;
     }
-    form, .storage-controls {
+    form, .controls {
       margin-top: 1rem;
     }
-    input {
+    input, select {
       padding: 0.5rem;
       margin-right: 0.5rem;
     }
@@ -46,6 +46,14 @@
 <body>
   <h1>Dynamic Quote Generator</h1>
 
+  <!-- Category Filter -->
+  <div class="controls">
+    <label for="categoryFilter">Filter by Category:</label>
+    <select id="categoryFilter" onchange="filterQuotes()">
+      <option value="all">All Categories</option>
+    </select>
+  </div>
+
   <!-- Quote Display -->
   <div id="quoteDisplay">Click "Show New Quote" to begin!</div>
   <button id="newQuote">Show New Quote</button>
@@ -58,7 +66,7 @@
   </form>
 
   <!-- Import/Export Controls -->
-  <div class="storage-controls">
+  <div class="controls">
     <button id="exportJson">Export Quotes (JSON)</button>
     <input type="file" id="importFile" accept=".json" />
   </div>
@@ -72,4 +80,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
