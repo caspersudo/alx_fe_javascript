@@ -13,6 +13,10 @@ const newQuoteText = document.getElementById("newQuoteText");
 const newQuoteCategory = document.getElementById("newQuoteCategory");
 const exportBtn = document.getElementById("exportJson");
 const importFile = document.getElementById("importFile");
+const syncNotice = document.getElementById("syncNotice");
+const resolveConflictBtn = document.getElementById("resolveConflict");
+
+let lastServerSync = []; // Store server snapshot for conflict handling
 
 // --- Local Storage Functions ---
 function saveQuotes() {
@@ -26,7 +30,7 @@ function loadQuotes() {
   }
 }
 
-// --- Session Storage Example (last viewed quote) ---
+// --- Session Storage (last viewed quote) ---
 function saveLastViewedQuote(quote) {
   sessionStorage.setItem("lastQuote", JSON.stringify(quote));
 }
@@ -51,9 +55,9 @@ function showRandomQuote() {
   saveLastViewedQuote(quote);
 }
 
-// --- Add a new quote dynamically ---
+// --- Add a new quote ---
 function addQuote(event) {
-  event.preventDefault(); // Prevent page reload
+  event.preventDefault();
   const text = newQuoteText.value.trim();
   const category = newQuoteCategory.value.trim();
 
@@ -62,14 +66,13 @@ function addQuote(event) {
     saveQuotes();
     newQuoteText.value = "";
     newQuoteCategory.value = "";
-
     alert("Quote added successfully!");
   } else {
     alert("Please enter both a quote and a category.");
   }
 }
 
-// --- Export to JSON file ---
+// --- Export JSON ---
 function exportToJsonFile() {
   const dataStr = JSON.stringify(quotes, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
@@ -83,7 +86,7 @@ function exportToJsonFile() {
   URL.revokeObjectURL(url);
 }
 
-// --- Import from JSON file ---
+// --- Import JSON ---
 function importFromJsonFile(event) {
   const fileReader = new FileReader();
   fileReader.onload = function(e) {
@@ -103,12 +106,64 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
+// --- Simulated server fetch ---
+async function fetchFromServer() {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+    const data = await response.json();
+
+    // Convert posts to "quotes"
+    const serverQuotes = data.map(post => ({
+      text: post.title,
+      category: "Server"
+    }));
+
+    handleServerSync(serverQuotes);
+  } catch (error) {
+    console.error("Error fetching from server:", error);
+  }
+}
+
+// --- Handle server sync ---
+function handleServerSync(serverQuotes) {
+  lastServerSync = serverQuotes;
+
+  const localQuotes = JSON.stringify(quotes);
+  const serverData = JSON.stringify(serverQuotes);
+
+  if (localQuotes !== serverData) {
+    // Default strategy: server wins
+    quotes = serverQuotes;
+    saveQuotes();
+
+    // Show notification
+    syncNotice.style.display = "block";
+  }
+}
+
+// --- Conflict resolution UI ---
+resolveConflictBtn.addEventListener("click", () => {
+  const choice = confirm("Server data differs from local. Click OK to keep SERVER version, Cancel to keep LOCAL version.");
+  
+  if (choice) {
+    quotes = lastServerSync; // Keep server
+    saveQuotes();
+  } else {
+    saveQuotes(); // Keep local
+  }
+
+  syncNotice.style.display = "none";
+  alert("Conflict resolved.");
+});
+
 // --- Event listeners ---
 newQuoteBtn.addEventListener("click", showRandomQuote);
 addQuoteForm.addEventListener("submit", addQuote);
 exportBtn.addEventListener("click", exportToJsonFile);
 importFile.addEventListener("change", importFromJsonFile);
 
-// --- Initialize App ---
-loadQuotes();          // Load from localStorage
-loadLastViewedQuote(); // Load from sessionStorage
+// --- Init ---
+loadQuotes();
+loadLastViewedQuote();
+fetchFromServer();
+setInterval(fetchFromServer, 30000); // Sync every 30s
