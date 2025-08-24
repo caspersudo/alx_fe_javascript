@@ -33,6 +33,14 @@
       padding: 0.5rem 1rem;
       cursor: pointer;
     }
+    #syncNotice {
+      display: none;
+      background: #ffecb3;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #f0c36d;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -55,6 +63,13 @@
     <input type="file" id="importFile" accept=".json" />
   </div>
 
+  <!-- Sync Notice -->
+  <div id="syncNotice">
+    Data updated from server. 
+    <button id="resolveConflict">Resolve Conflicts</button>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
+
