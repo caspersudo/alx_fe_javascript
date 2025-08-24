@@ -16,7 +16,7 @@ const importFile = document.getElementById("importFile");
 const syncNotice = document.getElementById("syncNotice");
 const resolveConflictBtn = document.getElementById("resolveConflict");
 
-let lastServerSync = []; // Store last server snapshot
+let lastServerSync = []; // Snapshot of server data
 
 // --- Local Storage Functions ---
 function saveQuotes() {
@@ -52,8 +52,8 @@ function addQuote(event) {
     quotes.push(newQuote);
     saveQuotes();
 
-    // Simulate POST to server
-    postToServer(newQuote);
+    // Post to server
+    postQuoteToServer(newQuote);
 
     newQuoteText.value = "";
     newQuoteCategory.value = "";
@@ -97,8 +97,8 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-// --- Simulated server fetch ---
-async function fetchFromServer() {
+// --- Fetch from server (REQUIRED name) ---
+async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
     const data = await response.json();
@@ -108,14 +108,14 @@ async function fetchFromServer() {
       category: "Server"
     }));
 
-    handleServerSync(serverQuotes);
+    syncQuotes(serverQuotes);
   } catch (error) {
     console.error("Error fetching from server:", error);
   }
 }
 
-// --- Simulated POST to server ---
-async function postToServer(quote) {
+// --- Post to server (REQUIRED name) ---
+async function postQuoteToServer(quote) {
   try {
     await fetch("https://jsonplaceholder.typicode.com/posts", {
       method: "POST",
@@ -128,21 +128,21 @@ async function postToServer(quote) {
   }
 }
 
-// --- Handle server sync ---
-function handleServerSync(serverQuotes) {
+// --- Sync logic (REQUIRED name) ---
+function syncQuotes(serverQuotes) {
   lastServerSync = serverQuotes;
   const localQuotes = JSON.stringify(quotes);
   const serverData = JSON.stringify(serverQuotes);
 
   if (localQuotes !== serverData) {
-    // Default strategy: server wins
+    // Conflict → default = server wins
     quotes = serverQuotes;
     saveQuotes();
     syncNotice.style.display = "block";
   }
 }
 
-// --- Conflict resolution UI ---
+// --- Conflict resolution ---
 resolveConflictBtn.addEventListener("click", () => {
   const choice = confirm("Server data differs from local. OK = keep SERVER version, Cancel = keep LOCAL version.");
   
@@ -165,5 +165,5 @@ importFile.addEventListener("change", importFromJsonFile);
 
 // --- Init ---
 loadQuotes();
-fetchFromServer();
-setInterval(fetchFromServer, 30000); // sync every 30s
+fetchQuotesFromServer();
+setInterval(fetchQuotesFromServer, 30000); // sync every 30s
